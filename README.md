@@ -1,90 +1,96 @@
-# NeuralPay Gateway
+# ⚡ NeuralPay Gateway
 
-**NeuralPay Gateway** is a Pay-Per-Use AI Gateway that integrates the **x402 Payment Protocol** with **On-Chain Access Logging** on the Avalanche Fuji Testnet.
+**NeuralPay Gateway** is a multi-feature AI powerhouse that bridges modern AI models (Groq, Hugging Face) with the **x402 Payment Protocol**. It enables developers to monetize AI services through micro-fees, while ensuring **On-Chain Access Logging** on the Avalanche Fuji Testnet for transparency.
 
-## What it does
-NeuralPay Gateway allows developers to monetize AI services with micro-fees. Every request is gated by an x402 paywall, ensuring instant crypto settlement before the AI response is delivered. Additionally, every successful payment is permanently logged on-chain via a smart contract for transparent usage auditing.
+## 🏗️ System Architecture
 
-## How x402 Works Here
-- **402 Required**: Any request to an AI endpoint without a valid payment header receives an HTTP 402 code.
-- **Micro-Payments**: Users pay a specific set price (e.g., $0.001) in USDC via the Facinet facilitator network.
-- **Gasless for Users**: The x402 protocol allows users to sign payments while facilitators pay the gas.
-- **Instant Unlock**: Once payment is verified, the server executes the Gemini AI task and logs the transaction on-chain.
+```mermaid
+graph TD
+    User([User / Developer])
+    Frontend[Web Interface Dashboard]
+    Paywall{x402 Paywall Middleware}
+    Backend[Node.js / Express Server]
+    Blockchain[(Avalanche Fuji Testnet)]
+    Groq[[Groq AI - Llama 3]]
+    HF[[Hugging Face - SDXL]]
+    Contracts[Payment History Smart Contract]
 
-## Smart Contract
-- **Contract Address**: `[CONTRACT_ADDRESS]`
-- **Network**: Avalanche Fuji Testnet
-- **Explorer**: [https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS]](https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS])
+    User -->|Interaction| Frontend
+    Frontend -->|API Request| Paywall
+    Paywall -->|Verified Payment| Backend
+    Backend -->|Text/EDA/Chat| Groq
+    Backend -->|Image Gen| HF
+    Backend -->|Record Log| Contracts
+    Contracts --- Blockchain
+```
 
-## Tech Stack
+## 🚀 Key Features
+
+### 1. 📝 AI Text Generation & Summary
+- **Summarize**: Condense long documents into concise summaries ($0.001)
+- **Generate**: High-speed text generation using Groq's Llama-3-70B model ($0.002)
+
+### 2. 🎨 AI Image Generation
+- **SDXL-Lightning**: Generate high-quality 1024x1024 images from text prompts using Hugging Face's serverless inference ($0.003)
+
+### 3. 📊 EDA Analysis (Exploratory Data Analysis)
+- **Interactive Charts**: Upload CSV files for automated statistical analysis.
+- **Visualizations**: Histograms, Doughnut charts, and Correlation Heatmaps using Chart.js ($0.002)
+
+### 4. 💬 Dataset Chat
+- **Talk to your Data**: Ask natural language questions about your CSV datasets.
+- **Context-Aware**: AI analyzes data stats and sample rows to provide accurate insights ($0.002)
+
+### 5. 🔍 Sentiment Analysis
+- **Advanced Insights**: Deep text analysis for sentiment and keyword extraction ($0.001)
+
+## 🛠️ Tech Stack
 - **Backend**: Node.js, Express
-- **AI**: Gemini 1.5 Flash (@google/generative-ai)
-- **Payments**: facinet-sdk (x402 Protocol)
-- **Blockchain**: Solidity, Ethers.js, Hardhat (Avalanche Fuji)
-- **Logistics**: Dotenv, Chalk, Ora
+- **AI Models**: Groq (Llama-3-70B), Hugging Face (Stable Diffusion XL)
+- **Frontend**: Vanilla HTML5/CSS3 (Modern Dark Theme), Chart.js
+- **Blockchain**: Solidity (Hardhat), Ethers.js
+- **Payments**: Facinet SDK (x402 Protocol)
+- **Network**: Avalanche Fuji Testnet
 
-## Setup
+## ⚙️ Setup & Installation
 
-1. **Clone Repo**
+1. **Clone the Repository**
    ```bash
-   git clone <repo-url>
+   git clone https://github.com/sohansarkar07/MMM
    cd neuralpay-gateway
    ```
 
 2. **Install Dependencies**
    ```bash
    npm install
-   cd contracts && npm install
    ```
 
-3. **Configure Environment**
-   - Copy `.env.example` to `.env`
-   - Fill in `GEMINI_API_KEY`, `WALLET_ADDRESS`, and `PRIVATE_KEY`.
+3. **Configure Environment Variables**
+   Create a `.env` file in the root directory:
+   ```env
+   GROQ_API_KEY=your_groq_key
+   HF_TOKEN=your_huggingface_token
+   WALLET_ADDRESS=your_avax_wallet
+   PRIVATE_KEY=your_private_key
+   CONTRACT_ADDRESS=your_deployed_contract
+   DEMO_MODE=true
+   ```
 
-4. **Deploy Smart Contract**
+4. **Smart Contract Deployment**
    ```bash
    cd contracts
    npx hardhat run scripts/deploy.js --network fuji
    ```
-   - Copy the deployed address into your `.env` file as `CONTRACT_ADDRESS`.
 
-5. **Start Server**
+5. **Run the Application**
    ```bash
    node server.js
    ```
+   Access at `http://localhost:3000`
 
-6. **Run Demo**
-   ```bash
-   node demo.js
-   ```
+## 🔗 Blockchain Logging
+Every successful AI request is logged on-chain. This ensures a transparent, immutable record of service usage and payments.
+- **Contract**: [View on Snowtrace](https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS])
 
-## API Endpoints
-
-### 1. Summarize Text ($0.001)
-```bash
-curl -X POST http://localhost:3000/api/summarize \
-  -H "Content-Type: application/json" \
-  -H "X-Payment: <x402-payload>" \
-  -d '{"text": "Your long text here..."}'
-```
-
-### 2. Generate Content ($0.002)
-```bash
-curl -X POST http://localhost:3000/api/generate \
-  -H "Content-Type: application/json" \
-  -H "X-Payment: <x402-payload>" \
-  -d '{"prompt": "Your AI prompt here..."}'
-```
-
-### 3. Analyze Text ($0.001)
-```bash
-curl -X POST http://localhost:3000/api/analyze \
-  -H "Content-Type: application/json" \
-  -H "X-Payment: <x402-payload>" \
-  -d '{"text": "Text to analyze sentiment..."}'
-```
-
-### 4. History (Free)
-```bash
-curl http://localhost:3000/api/history
-```
+---
+*Built for the VIBATHON Hackathon.*
