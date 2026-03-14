@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralPay | EDA Analysis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card-bg: rgba(20, 20, 30, 0.7);
+            --accent: #7c4dff;
+            --accent-glow: rgba(124, 77, 255, 0.3);
+            --text: #ffffff;
+            --text-dim: #a0a0b0;
+            --border: rgba(255, 255, 255, 0.1);
+            --green: #00ff80;
+            --orange: #ffaa00;
+            --red: #ff4d4d;
+            --blue: #4da6ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+        .glow { position: fixed; top: -20%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%); z-index: -1; pointer-events: none; }
+
+        header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: center; max-width: 1400px; margin: 0 auto; width: 100%; }
+        .logo { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; background: linear-gradient(135deg, #fff 0%, var(--accent) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-decoration: none; }
+        .nav-links { display: flex; gap: 1rem; align-items: center; }
+        .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.3s; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text); background: rgba(124,77,255,0.15); }
+        .price-tag { background: rgba(124,77,255,0.1); color: var(--accent); padding: 0.25rem 0.6rem; border-radius: 0.4rem; font-size: 0.75rem; font-weight: 600; }
+
+        main { max-width: 1400px; margin: 0 auto; padding: 0 2rem 3rem; }
+
+        /* Upload Section */
+        .upload-section { margin-bottom: 2rem; }
+        .card { background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--border); border-radius: 1.5rem; padding: 2rem; transition: border-color 0.3s; }
+        .card:hover { border-color: rgba(124,77,255,0.4); }
+        .card h2 { margin-bottom: 1rem; font-size: 1.3rem; }
+
+        .upload-area { border: 2px dashed rgba(124,77,255,0.3); border-radius: 1rem; padding: 2.5rem; text-align: center; cursor: pointer; transition: all 0.3s; background: rgba(0,0,0,0.2); position: relative; }
+        .upload-area:hover, .upload-area.dragover { border-color: var(--accent); background: rgba(124,77,255,0.05); }
+        .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .upload-area p { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.5rem; }
+        .upload-area .filename { color: var(--green); font-weight: 600; margin-top: 0.5rem; }
+
+        .or-divider { text-align: center; color: var(--text-dim); margin: 1rem 0; font-size: 0.85rem; }
+        textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; color: white; font-size: 0.85rem; font-family: monospace; outline: none; resize: vertical; transition: border-color 0.3s; }
+        textarea:focus { border-color: var(--accent); }
+
+        .btn { background: linear-gradient(135deg, var(--accent) 0%, #a381ff 100%); color: white; border: none; padding: 1rem 2rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%; margin-top: 1rem; font-size: 1rem; }
+        .btn:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .spinner { width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading .spinner { display: block; }
+        .loading .btn-text { display: none; }
+
+        /* Results */
+        #results { display: none; }
+
+        /* Overview Cards */
+        .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; text-align: center; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), #a381ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .stat-card .label { color: var(--text-dim); font-size: 0.8rem; margin-top: 0.3rem; }
+
+        /* Section Titles */
+        .section-title { font-size: 1.3rem; font-weight: 600; margin: 2rem 0 1rem; display: flex; align-items: center; gap: 0.5rem; }
+
+        /* Charts Grid */
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .chart-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 1rem; padding: 1.5rem; }
+        .chart-card h3 { font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-dim); }
+        .chart-card canvas { max-height: 300px; }
+
+        /* Stats Table */
+        .stats-table-wrap { overflow-x: auto; margin-bottom: 2rem; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+        th { color: var(--accent); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; background: rgba(124,77,255,0.05); }
+        td { color: var(--text-dim); }
+        tr:hover td { color: var(--text); background: rgba(255,255,255,0.02); }
+        .type-badge { padding: 0.2rem 0.5rem; border-radius: 0.3rem; font-size: 0.7rem; font-weight: 600; }
+        .type-numeric { background: rgba(77,166,255,0.15); color: var(--blue); }
+        .type-categorical { background: rgba(255,170,0,0.15); color: var(--orange); }
+
+        /* Correlation Heatmap */
+        .heatmap-container { overflow-x: auto; }
+        .heatmap { border-collapse: collapse; margin: 0 auto; }
+        .heatmap th { padding: 0.5rem; font-size: 0.7rem; color: var(--text-dim); font-weight: 400; max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .heatmap td { width: 50px; height: 50px; text-align: center; font-size: 0.7rem; font-weight: 600; border: 1px solid rgba(0,0,0,0.3); }
+
+        /* AI Insights */
+        .insights-box { background: rgba(0,0,0,0.3); border-radius: 1rem; padding: 1.5rem; border-left: 4px solid var(--accent); line-height: 1.8; font-size: 0.9rem; color: var(--text-dim); white-space: pre-wrap; }
+
+        /* Sample Data */
+        .sample-table { font-size: 0.8rem; }
+        .sample-table th { background: rgba(124,77,255,0.1); }
+
+        /* Payment Info */
+        .payment-bar { display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding: 1rem 1.5rem; background: var(--card-bg); border: 1px solid var(--border); border-radius: 1rem; font-size: 0.85rem; color: var(--text-dim); }
+        .tx-hash { color: var(--accent); font-family: monospace; text-decoration: none; }
+
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .overview-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+
+    <header>
+        <a href="/" class="logo">⚡ NeuralPay Gateway</a>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/eda.html" class="active">📊 EDA Analysis</a>
+            <span class="price-tag">$0.002 per analysis</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <div class="card">
+                <h2>📊 Exploratory Data Analysis</h2>
+                <p style="color: var(--text-dim); margin-bottom: 1.5rem;">Upload a CSV file or paste data to get instant statistical analysis, interactive charts, and AI-powered insights.</p>
+
+                <div class="upload-area" id="drop-zone">
+                    <div class="upload-icon">📁</div>
+                    <div><strong>Drop CSV file here</strong> or click to browse</div>
+                    <p>Supports .csv files up to 5MB</p>
+                    <div class="filename" id="file-name" style="display:none"></div>
+                    <input type="file" id="file-input" accept=".csv">
+                </div>
+
+                <div class="or-divider">— or paste CSV data directly —</div>
+                <textarea id="csv-input" rows="6" placeholder="name,age,salary,department&#10;Alice,30,70000,Engineering&#10;Bob,25,55000,Marketing&#10;Charlie,35,85000,Engineering&#10;..."></textarea>
+
+                <button id="analyze-btn" class="btn" onclick="runEDA()">
+                    <div class="spinner"></div>
+                    <span class="btn-text">🔬 Analyze Data via x402</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results">
+            <!-- Overview Cards -->
+            <div class="overview-grid" id="overview-cards"></div>
+
+            <!-- Stats Table -->
+            <div class="section-title">📋 Column Statistics</div>
+            <div class="card stats-table-wrap">
+                <table id="stats-table">
+                    <thead>
+                        <tr><th>Column</th><th>Type</th><th>Count</th><th>Missing</th><th>Mean</th><th>Std</th><th>Min</th><th>Q1</th><th>Median</th><th>Q3</th><th>Max</th><th>Unique</th><th>Top Value</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Distribution Charts -->
+            <div class="section-title">📈 Distribution Charts</div>
+            <div class="charts-grid" id="dist-charts"></div>
+
+            <!-- Correlation Matrix -->
+            <div id="corr-section" style="display:none">
+                <div class="section-title">🔗 Correlation Matrix</div>
+                <div class="card">
+                    <div class="heatmap-container" id="heatmap-wrap"></div>
+                </div>
+            </div>
+
+            <!-- AI Insights -->
+            <div class="section-title">🤖 AI Insights</div>
+            <div class="card">
+                <div class="insights-box" id="ai-insights"></div>
+            </div>
+
+            <!-- Sample Data Preview -->
+            <div class="section-title">👀 Sample Data (First 5 Rows)</div>
+            <div class="card stats-table-wrap">
+                <table id="sample-table" class="sample-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- Payment Bar -->
+            <div class="payment-bar" id="payment-bar">
+                <span>Cost: <strong id="eda-cost"></strong></span>
+                <span>Payment Tx: <a href="#" class="tx-hash" id="eda-tx" target="_blank"></a></span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const chartInstances = [];
+        const CHART_COLORS = [
+            '#7c4dff','#4da6ff','#ff6b6b','#ffd93d','#6bcb77',
+            '#ee6c4d','#a381ff','#4ecdc4','#f38181','#aa96da',
+            '#fcbad3','#f6d18b','#9bf6ff','#bdb2ff','#ffc6ff'
+        ];
+
+        // File upload handling
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const fileNameEl = document.getElementById('file-name');
+        const csvInput = document.getElementById('csv-input');
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                const file = e.target.files[0];
+                fileNameEl.textContent = `✅ ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+                fileNameEl.style.display = 'block';
+                const reader = new FileReader();
+                reader.onload = (ev) => { csvInput.value = ev.target.result; };
+                reader.readAsText(file);
+            }
+        });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        async function runEDA() {
+            const csv = csvInput.value.trim();
+            if (!csv) return alert('Please upload a CSV file or paste data');
+
+            const btn = document.getElementById('analyze-btn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/eda', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ csv })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error);
+                renderResults(data);
+            } catch (e) {
+                alert('Error: ' + e.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('results').style.display = 'block';
+
+            // Destroy previous charts
+            chartInstances.forEach(c => c.destroy());
+            chartInstances.length = 0;
+
+            renderOverview(data.overview);
+            renderStatsTable(data.overview, data.columns);
+            renderDistCharts(data.overview, data.columns);
+            renderCorrelation(data.overview.numericColumns, data.correlation);
+            renderAIInsights(data.aiInsights);
+            renderSampleData(data.overview.columnNames, data.sampleRows);
+
+            // Payment info
+            document.getElementById('eda-cost').textContent = data.cost;
+            const txEl = document.getElementById('eda-tx');
+            txEl.textContent = data.paymentTxHash.slice(0, 14) + '...';
+            txEl.href = `https://testnet.snowtrace.io/tx/${data.paymentTxHash}`;
+
+            document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function renderOverview(ov) {
+            document.getElementById('overview-cards').innerHTML = `
+                <div class="stat-card"><div class="value">${ov.rows.toLocaleString()}</div><div class="label">Total Rows</div></div>
+                <div class="stat-card"><div class="value">${ov.columns}</div><div class="label">Total Columns</div></div>
+                <div class="stat-card"><div class="value">${ov.numericColumns.length}</div><div class="label">Numeric Columns</div></div>
+                <div class="stat-card"><div class="value">${ov.categoricalColumns.length}</div><div class="label">Categorical Columns</div></div>
+            `;
+        }
+
+        function renderStatsTable(ov, cols) {
+            const tbody = document.querySelector('#stats-table tbody');
+            tbody.innerHTML = ov.columnNames.map(name => {
+                const s = cols[name];
+                if (s.type === 'numeric') {
+                    return `<tr>
+                        <td><strong>${name}</strong></td>
+                        <td><span class="type-badge type-numeric">Numeric</span></td>
+                        <td>${s.count}</td><td>${s.missing}</td>
+                        <td>${s.mean}</td><td>${s.std}</td>
+                        <td>${s.min}</td><td>${s.q1}</td><td>${s.median}</td><td>${s.q3}</td><td>${s.max}</td>
+                        <td>—</td><td>—</td>
+                    </tr>`;
+                }
+                return `<tr>
+                    <td><strong>${name}</strong></td>
+                    <td><span class="type-badge type-categorical">Categorical</span></td>
+                    <td>${s.total}</td><td>${s.missing}</td>
+                    <td colspan="5" style="text-align:center; color:var(--text-dim)">—</td>
+                    <td>—</td><td>—</td>
+                    <td>${s.unique}</td><td>${s.top} (${s.topFreq})</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function renderDistCharts(ov, cols) {
+            const container = document.getElementById('dist-charts');
+            container.innerHTML = '';
+
+            ov.columnNames.forEach((name, i) => {
+                const s = cols[name];
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-card';
+
+                if (s.type === 'numeric') {
+                    wrapper.innerHTML = `<h3>📊 ${name} — Distribution</h3><canvas id="chart-${i}"></canvas>`;
+                    container.appendChild(wrapper);
+                    const ctx = document.getElementById(`chart-${i}`).getContext('2d');
+                    const chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: s.histogram.labels,
+                            datasets: [{
+                                label: 'Frequency',
+                                data: s.histogram.counts,
+                                backgroundColor: CHART_COLORS[i % CHART_COLORS.length] + '99',
+                                borderColor: CHART_COLORS[i % CHART_COLORS.length],
+                                borderWidth: 1,
+                                borderRadius: 4,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: { backgroundColor: 'rgba(20,20,30,0.9)', titleColor: '#fff', bodyColor: '#a0a0b0' }
+                            },
+                            scales: {
+                                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0b0', font: { size: 10 } } },
+                                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0b0' }, beginAtZero: true }
+                            }
+                        }
+                    });
+                    chartInstances.push(chart);
+                } else {
+                    const dist = s.distribution;
+                    const labels = Object.keys(dist);
+                    const values = Object.values(dist);
+                    wrapper.innerHTML = `<h3>📊 ${name} — Category Distribution</h3><canvas id="chart-${i}"></canvas>`;
+                    container.appendChild(wrapper);
+                    const ctx = document.getElementById(`chart-${i}`).getContext('2d');
+                    const chart = new Chart(ctx, {
+                        type: labels.length <= 6 ? 'doughnut' : 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: labels.map((_, j) => CHART_COLORS[j % CHART_COLORS.length] + '99'),
+                                borderColor: labels.map((_, j) => CHART_COLORS[j % CHART_COLORS.length]),
+                                borderWidth: 1,
+                                borderRadius: labels.length > 6 ? 4 : 0,
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { display: labels.length <= 6, position: 'bottom', labels: { color: '#a0a0b0', padding: 12 } },
+                                tooltip: { backgroundColor: 'rgba(20,20,30,0.9)', titleColor: '#fff', bodyColor: '#a0a0b0' }
+                            },
+                            ...(labels.length > 6 ? {
+                                scales: {
+                                    x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0b0', font: { size: 10 }, maxRotation: 45 } },
+                                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#a0a0b0' }, beginAtZero: true }
+                                }
+                            } : {})
+                        }
+                    });
+                    chartInstances.push(chart);
+                }
+            });
+        }
+
+        function renderCorrelation(numCols, corr) {
+            const section = document.getElementById('corr-section');
+            if (numCols.length < 2) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+
+            const wrap = document.getElementById('heatmap-wrap');
+            let html = '<table class="heatmap"><tr><th></th>';
+            numCols.forEach(c => html += `<th>${c}</th>`);
+            html += '</tr>';
+            numCols.forEach(c1 => {
+                html += `<tr><th>${c1}</th>`;
+                numCols.forEach(c2 => {
+                    const val = corr[c1] && corr[c1][c2] !== undefined ? corr[c1][c2] : 0;
+                    const color = corrColor(val);
+                    html += `<td style="background:${color}; color: ${Math.abs(val) > 0.5 ? '#fff' : '#ccc'}">${val !== null ? val.toFixed(2) : '—'}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</table>';
+            wrap.innerHTML = html;
+        }
+
+        function corrColor(val) {
+            if (val === null) return 'rgba(50,50,60,0.5)';
+            const abs = Math.abs(val);
+            if (val > 0) return `rgba(124, 77, 255, ${0.1 + abs * 0.8})`;
+            return `rgba(255, 77, 77, ${0.1 + abs * 0.8})`;
+        }
+
+        function renderAIInsights(text) {
+            document.getElementById('ai-insights').textContent = text;
+        }
+
+        function renderSampleData(headers, rows) {
+            const thead = document.querySelector('#sample-table thead');
+            const tbody = document.querySelector('#sample-table tbody');
+            thead.innerHTML = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+            tbody.innerHTML = rows.map(r => '<tr>' + r.map(v => `<td>${v}</td>`).join('') + '</tr>').join('');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuralPay Gateway | AI & Blockchain</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --card-bg: rgba(20, 20, 30, 0.7);
+            --accent: #7c4dff;
+            --accent-glow: rgba(124, 77, 255, 0.3);
+            --text: #ffffff;
+            --text-dim: #a0a0b0;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Background Effects */
+        .glow {
+            position: fixed;
+            top: -20%;
+            right: -10%;
+            width: 60vw;
+            height: 60vw;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            padding: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            background: rgba(0, 255, 128, 0.1);
+            color: #00ff80;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 255, 128, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff80;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .playground {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            padding: 2rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(124, 77, 255, 0.5);
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            color: var(--text);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        textarea, input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus, input:focus {
+            border-color: var(--accent);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent) 0%, #a381ff 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .result-box {
+            margin-top: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0.75rem;
+            padding: 1rem;
+            min-height: 100px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            color: var(--text-dim);
+            border: 1px dashed var(--border);
+            white-space: pre-wrap;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .tx-hash {
+            color: var(--accent);
+            text-decoration: none;
+            font-family: monospace;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .log-container {
+            max-height: 500px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .log-item {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            border-left: 3px solid var(--accent);
+        }
+
+        .log-item .time {
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .log-item .wallet {
+            font-family: monospace;
+            color: #fff;
+        }
+
+        .price-tag {
+            background: rgba(124, 77, 255, 0.1);
+            color: var(--accent);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.4rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading .spinner { display: block; }
+        .loading .btn-text { display: none; }
+
+        @media (max-width: 900px) {
+            main { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="glow"></div>
+    
+    <header>
+        <div class="logo">
+            <span>⚡</span> NeuralPay Gateway
+        </div>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="/eda.html" style="color: #a0a0b0; text-decoration: none; font-size: 0.9rem; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.3s; border: 1px solid rgba(255,255,255,0.1);" onmouseover="this.style.color='#fff';this.style.background='rgba(124,77,255,0.15)'" onmouseout="this.style.color='#a0a0b0';this.style.background='transparent'">📊 EDA Analysis</a>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span id="network-name">Avalanche Fuji</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="playground">
+            <!-- Summarize Card -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>Summarize Text</h2>
+                    <span class="price-tag">$0.001</span>
+                </div>
+                <div class="input-group">
+                    <textarea id="summarize-input" rows="4" placeholder="Paste long text here..."></textarea>
+                    <button id="summarize-btn" class="btn" onclick="callApi('/api/summarize', 'summarize')">
+                        <div class="spinner"></div>
+                        <span class="btn-text">Process with x402</span>
+                    </button>
+                </div>
+                <div id="summarize-result" class="result-box">Response will appear here...</div>
+                <div id="summarize-meta" class="meta-info" style="display:none">
+                    <span>Payment Tx: <a href="#" class="tx-hash" id="summarize-payment-tx"></a></span>
+                </div>
+            </div>
+
+            <!-- Image Generation Card -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>🎨 AI Image Generation</h2>
+                    <span class="price-tag">$0.003</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="generate-image-input" placeholder="Describe the image you want to generate...">
+                    <button id="generate-image-btn" class="btn" onclick="callImageApi()">
+                        <div class="spinner"></div>
+                        <span class="btn-text">Generate Image via x402</span>
+                    </button>
+                </div>
+                <div id="generate-image-result" class="result-box" style="display:flex; align-items:center; justify-content:center; min-height:150px;">Generated image will appear here...</div>
+                <div id="generate-image-meta" class="meta-info" style="display:none">
+                    <span>Payment Tx: <a href="#" class="tx-hash" id="generate-image-payment-tx"></a></span>
+                </div>
+            </div>
+
+            <!-- Text Generation Card -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>AI Text Generation</h2>
+                    <span class="price-tag">$0.002</span>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="generate-input" placeholder="Enter prompt...">
+                    <button id="generate-btn" class="btn" onclick="callApi('/api/generate', 'generate')">
+                        <div class="spinner"></div>
+                        <span class="btn-text">Generate via x402</span>
+                    </button>
+                </div>
+                <div id="generate-result" class="result-box">Output will appear here...</div>
+                <div id="generate-meta" class="meta-info" style="display:none">
+                    <span>Payment Tx: <a href="#" class="tx-hash" id="generate-payment-tx"></a></span>
+                </div>
+            </div>
+
+            <!-- Analyze Card -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2>Sentiment Analysis</h2>
+                    <span class="price-tag">$0.001</span>
+                </div>
+                <div class="input-group">
+                    <textarea id="analyze-input" rows="3" placeholder="Enter text to analyze..."></textarea>
+                    <button id="analyze-btn" class="btn" onclick="callApi('/api/analyze', 'analyze')">
+                        <div class="spinner"></div>
+                        <span class="btn-text">Analyze via x402</span>
+                    </button>
+                </div>
+                <div id="analyze-result" class="result-box">Analysis data will appear here...</div>
+                <div id="analyze-meta" class="meta-info" style="display:none">
+                    <span>Payment Tx: <a href="#" class="tx-hash" id="analyze-payment-tx"></a></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card">
+                <h2>Gateway Health</h2>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-dim);">Total Calls:</span>
+                        <span id="total-calls">0</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-dim);">Demo Mode:</span>
+                        <span id="demo-mode-status" style="color: #ffcc00;">Enabled</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 0.25rem; margin-top: 0.5rem;">
+                        <span style="color: var(--text-dim);">Contract:</span>
+                        <a href="#" class="tx-hash" id="contract-link" style="font-size: 0.7rem; word-break: break-all;"></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>On-Chain History</h2>
+                <div id="history-list" class="log-container">
+                    <div class="log-item">No records yet.</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Update health and history every 5 seconds
+        async function updateStats() {
+            try {
+                const health = await fetch('/api/health').then(r => r.json());
+                document.getElementById('total-calls').innerText = health.totalCalls;
+                document.getElementById('demo-mode-status').innerText = health.demoMode ? 'Enabled' : 'Disabled';
+                document.getElementById('demo-mode-status').style.color = health.demoMode ? '#ffcc00' : '#00ff80';
+                
+                const contractLink = document.getElementById('contract-link');
+                contractLink.innerText = health.contractAddress;
+                contractLink.href = `https://testnet.snowtrace.io/address/${health.contractAddress}`;
+
+                const history = await fetch('/api/history').then(r => r.json());
+                const historyList = document.getElementById('history-list');
+                if (history.length > 0) {
+                    historyList.innerHTML = history.map(h => `
+                        <div class="log-item">
+                            <div class="time">${new Date(parseInt(h.timestamp) * 1000).toLocaleString()}</div>
+                            <div class="wallet">${h.wallet.slice(0,6)}...${h.wallet.slice(-4)}</div>
+                            <div style="color: var(--accent)">${h.endpoint}</div>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                console.error('Stats update failed', e);
+            }
+        }
+
+        async function callApi(endpoint, type) {
+            const input = document.getElementById(`${type}-input`).value;
+            if (!input) return alert('Please enter some input');
+
+            const btn = document.getElementById(`${type}-btn`);
+            const resultBox = document.getElementById(`${type}-result`);
+            const meta = document.getElementById(`${type}-meta`);
+            const txLink = document.getElementById(`${type}-payment-tx`);
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            resultBox.innerText = 'Processing payment and AI request...';
+            meta.style.display = 'none';
+
+            try {
+                const body = type === 'generate' ? { prompt: input } : { text: input };
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (type === 'analyze') {
+                        resultBox.innerText = `Sentiment: ${data.sentiment}\nKeywords: ${data.keywords.join(', ')}\n\n${data.summary}`;
+                    } else {
+                        resultBox.innerText = data.summary || data.result;
+                    }
+                    meta.style.display = 'flex';
+                    txLink.innerText = data.paymentTxHash.slice(0, 10) + '...';
+                    txLink.href = `https://testnet.snowtrace.io/tx/${data.paymentTxHash}`;
+                } else {
+                    resultBox.innerText = `Error: ${data.error}`;
+                    resultBox.style.color = '#ff4d4d';
+                }
+            } catch (e) {
+                resultBox.innerText = `Network error: ${e.message}`;
+                resultBox.style.color = '#ff4d4d';
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                updateStats();
+            }
+        }
+
+        setInterval(updateStats, 5000);
+        updateStats();
+
+        async function callImageApi() {
+            const input = document.getElementById('generate-image-input').value;
+            if (!input) return alert('Please enter a prompt');
+
+            const btn = document.getElementById('generate-image-btn');
+            const resultBox = document.getElementById('generate-image-result');
+            const meta = document.getElementById('generate-image-meta');
+            const txLink = document.getElementById('generate-image-payment-tx');
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+            resultBox.innerHTML = 'Processing payment and generating image...';
+            resultBox.style.color = 'var(--text-dim)';
+            meta.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: input })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultBox.innerHTML = `<img src="${data.image}" alt="Generated image" style="max-width:100%; border-radius:0.75rem; display:block;">`;
+                    meta.style.display = 'flex';
+                    txLink.innerText = data.paymentTxHash.slice(0, 10) + '...';
+                    txLink.href = `https://testnet.snowtrace.io/tx/${data.paymentTxHash}`;
+                } else {
+                    resultBox.innerHTML = `Error: ${data.error}`;
+                    resultBox.style.color = '#ff4d4d';
+                }
+            } catch (e) {
+                resultBox.innerHTML = `Network error: ${e.message}`;
+                resultBox.style.color = '#ff4d4d';
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+                updateStats();
+            }
+        }
+    </script>
+</body>
+</html>
