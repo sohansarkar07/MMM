@@ -205,6 +205,58 @@ app.post('/api/generate-image', x402Middleware(0.003), async (req, res) => {
     }
 });
 
+app.post('/api/dataset-chat', x402Middleware(0.002), async (req, res) => {
+    try {
+        const { csv, prompt: userPrompt } = req.body;
+        if (!csv) return res.status(400).json({ error: 'CSV data is required' });
+        if (!userPrompt) return res.status(400).json({ error: 'Question/Prompt is required' });
+
+        const { headers, rows } = parseCSV(csv);
+        if (rows.length === 0) return res.status(400).json({ error: 'No data rows found' });
+
+        // Build a concise data context for the LLM
+        const columnsInfo = headers.map((h, idx) => {
+            const values = rows.slice(0, 100).map(r => r[idx]); // Analyze top 100 rows
+            const stats = computeColumnStats(values);
+            if (stats.type === 'numeric') {
+                return `${h} (Numeric): Range [${stats.min} to ${stats.max}], Mean ${stats.mean}`;
+            }
+            return `${h} (Categorical): ${stats.unique} unique values, Top: "${stats.top}"`;
+        }).join('\n');
+
+        const dataSample = rows.slice(0, 5).map(r => r.join(', ')).join('\n');
+        
+        const systemPrompt = `You are a data assistant. You are chatting about a dataset with ${rows.length} rows and ${headers.length} columns.
+        
+### Column Info:
+${columnsInfo}
+
+### Sample Data (first 5 rows):
+${dataSample}
+
+Answer the user's question accurately based on the data summary provided. If you can't answer from this summary alone, be honest but try to provide insights from the statistics. Keep answers concise but helpful.`;
+
+        const result = await callGroq([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+        ]);
+
+        const onChainTx = await recordOnChain(req.x402.from, '/api/dataset-chat', 0.002);
+
+        res.json({
+            success: true,
+            response: result,
+            cost: '$0.002',
+            paymentTxHash: req.x402.txHash,
+            contractTxHash: onChainTx,
+            endpoint: '/api/dataset-chat'
+        });
+    } catch (error) {
+        console.error('Dataset Chat error:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 app.post('/api/analyze', x402Middleware(0.001), async (req, res) => {
     try {
         const { text } = req.body;
@@ -400,7 +452,8 @@ app.get('/api/endpoints', (req, res) => {
         { route: '/api/generate', method: 'POST', price: '$0.002', description: 'Generate text based on a prompt' },
         { route: '/api/generate-image', method: 'POST', price: '$0.003', description: 'Generate an image from a text prompt (SDXL)' },
         { route: '/api/analyze', method: 'POST', price: '$0.001', description: 'Analyze sentiment and extract keywords' },
-        { route: '/api/eda', method: 'POST', price: '$0.002', description: 'Exploratory Data Analysis with charts on CSV data' }
+        { route: '/api/eda', method: 'POST', price: '$0.002', description: 'Exploratory Data Analysis with charts on CSV data' },
+        { route: '/api/dataset-chat', method: 'POST', price: '$0.002', description: 'Chat with your dataset using natural language' }
     ]);
 });
 
