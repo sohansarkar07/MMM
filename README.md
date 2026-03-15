@@ -55,47 +55,6 @@ Give it a task like *"Analyze this dataset for growth trends"* — it automatica
 
 ---
 
-## ⚙️ Task Pipeline
-
-This detailed execution pipeline mimics the complex orchestration required to handle dynamic AI endpoint requests, x402 payment confirmations, and on-chain logging seamlessly.
-
-```mermaid
-graph TD
-    subgraph "Main Terminal - Orchestrator"
-        U[User: Sends Data & Prompt] --> Dis[Discover Required Endpoint]
-        Dis --> Sel[Select AI Task: Summarize / Generate / EDA]
-        Sel --> Pay[Pay via x402 Facinet Middleware]
-    end
-
-    Pay -->|402 Configured| Net{Facilitator Network}
-    Net -->|USDC Transferred| Verified[Payment Confirmed]
-    Net -.->|Insufficient Funds| Denied[402 Error]
-
-    subgraph "Worker Agents - AI Infrastructure"
-        Verified --> W1
-        Verified --> W2
-        Verified --> W3
-        Verified --> W4
-        
-        W1[fa:fa-robot Groq Llama 3.3<br>Summary Agent]
-        W2[fa:fa-robot Groq Llama 3.3<br>Chat/Gen Agent]
-        W3[fa:fa-image HuggingFace SDXL<br>Vision Agent]
-        W4[fa:fa-chart-bar Local Compute + Groq<br>EDA Analyst]
-    end
-    
-    W1 -.-> Res[Compile Final JSON Result]
-    W2 -.-> Res
-    W3 -.-> Res
-    W4 -.-> Res
-
-    subgraph "On-Chain Resolution"
-        Res --> Log[Smart Contract: Record Payment & Access]
-        Log --> Final[Display Output + Tx Hash]
-    end
-```
-
----
-
 ## 🏗️ Architecture
 
 ### High-Level Flow
@@ -144,6 +103,47 @@ sequenceDiagram
     A-->>G: contract tx hash
     
     G-->>C: 200 OK + Payload + Tx Hashes
+```
+
+---
+
+## ⚙️ Task Pipeline
+
+This detailed execution pipeline mimics the complex orchestration required to handle dynamic AI endpoint requests, x402 payment confirmations, and on-chain logging seamlessly.
+
+```mermaid
+graph TD
+    subgraph "Main Terminal - Orchestrator"
+        U[User: Sends Data & Prompt] --> Dis[Discover Required Endpoint]
+        Dis --> Sel[Select AI Task: Summarize / Generate / EDA]
+        Sel --> Pay[Pay via x402 Facinet Middleware]
+    end
+
+    Pay -->|402 Configured| Net{Facilitator Network}
+    Net -->|USDC Transferred| Verified[Payment Confirmed]
+    Net -.->|Insufficient Funds| Denied[402 Error]
+
+    subgraph "Worker Agents - AI Infrastructure"
+        Verified --> W1
+        Verified --> W2
+        Verified --> W3
+        Verified --> W4
+        
+        W1[fa:fa-robot Groq Llama 3.3<br>Summary Agent]
+        W2[fa:fa-robot Groq Llama 3.3<br>Chat/Gen Agent]
+        W3[fa:fa-image HuggingFace SDXL<br>Vision Agent]
+        W4[fa:fa-chart-bar Local Compute + Groq<br>EDA Analyst]
+    end
+    
+    W1 -.-> Res[Compile Final JSON Result]
+    W2 -.-> Res
+    W3 -.-> Res
+    W4 -.-> Res
+
+    subgraph "On-Chain Resolution"
+        Res --> Log[Smart Contract: Record Payment & Access]
+        Log --> Final[Display Output + Tx Hash]
+    end
 ```
 
 ---
