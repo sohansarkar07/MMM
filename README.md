@@ -206,21 +206,24 @@ Building x402-compatible agents typically requires:
 - Complex settlement logic
 - Direct blockchain interactions
 
-### The Solution
-Facinet SDK abstracts all of this into a single middleware:
+### Why We Chose Facinet
 
-```javascript
-import { paywall } from 'facinet-sdk'
+| Feature | Without Facinet | With Facinet |
+| --- | --- | --- |
+| 402 Response | Manual implementation | ✅ Automatic |
+| Payment Verification | Custom API calls | ✅ Built-in middleware |
+| Settlement | Direct chain interaction | ✅ Gasless via API |
+| Network Support | Manual configuration | ✅ `avalanche-fuji` ready |
+| Code Required | ~200 lines | ~5 lines |
 
-app.post('/api/eda', paywall({
-    amount: '0.002',
-    recipient: process.env.WALLET_ADDRESS
-}), async (req, res) => {
-    // Payment already verified!
-    const insights = await analyzeData(req.body.csv)
-    res.json({ insights })
-})
-```
+### Facinet Features We Use
+
+- **`paywall()` middleware** — Returns 402 when no payment, auto-verifies on retry
+- **`/api/x402/verify`** — Validates payment signatures
+- **`/api/x402/settle`** — Executes USDC transfer on-chain
+- **Gasless transactions** — No AVAX needed for settlement
+
+📚 [Facinet Documentation](https://facinet.vercel.app/docs#sdk-reference)
 
 ---
 
