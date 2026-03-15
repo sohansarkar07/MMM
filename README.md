@@ -1,96 +1,168 @@
-# ⚡ NeuralPay Gateway
+# NeuralPay Gateway
 
-**NeuralPay Gateway** is a multi-feature AI powerhouse that bridges modern AI models (Groq, Hugging Face) with the **x402 Payment Protocol**. It enables developers to monetize AI services through micro-fees, while ensuring **On-Chain Access Logging** on the Avalanche Fuji Testnet for transparency.
+**NeuralPay Gateway** is a Pay-Per-Use AI Gateway that integrates the **x402 Payment Protocol** with **On-Chain Access Logging** on the Avalanche Fuji Testnet.
+
+## 🧬 Smart Contracts
+
+**Deployed on Avalanche Fuji Testnet**
+
+| Contract | Address |
+| --- | --- |
+| AccessLog | `[CONTRACT_ADDRESS]` |
+
+Explorer: [https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS]](https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS])
+
+## 🔧 Tech Stack
+
+| Component | Technology |
+| --- | --- |
+| Backend | Node.js, Express |
+| AI | OpenAI (GPT-4o-mini) |
+| Payments | x402 Protocol |
+| Settlement | facinet-sdk |
+| Blockchain | Avalanche Fuji |
+| Smart Contracts | Solidity, Ethers.js, Hardhat |
+| Frontend | Glassmorphic Dashboard (Vanilla JS/CSS) |
+
+## 📁 Project Structure
+
+```text
+neuralpay-gateway/
+├── server.js              # Express + Facinet paywall & OpenAI routes
+├── demo.js                # API interaction demo script
+├── contracts/             # Smart Contracts workspace
+│   ├── contracts/
+│   │   └── AccessLog.sol  # On-chain access logging contract
+│   ├── scripts/
+│   │   └── deploy.js      # Hardhat deployment script
+│   └── hardhat.config.js  # Fuji testnet configuration
+├── public/                # Frontend dashboard files
+└── .env                   # Environment variables
+```
+
+## 🔑 Why Facinet SDK?
+
+| The secret sauce for seamless x402 payments
+
+### The Problem
+Building x402-compatible agents typically requires:
+- Custom 402 response handling
+- Manual payment verification
+- Complex settlement logic
+- Direct blockchain interactions
+
+### The Solution
+Facinet SDK abstracts all of this into a single middleware:
+
+```javascript
+import { paywall } from 'facinet-sdk'
+
+app.post('/api/summarize', paywall({
+    amount: '0.001',
+    recipient: process.env.WALLET_ADDRESS
+}), async (req, res) => {
+    // Payment already verified! Just do your thing
+    const result = await processTask(req.body.text)
+    res.json({ result })
+})
+```
+
+### Why We Chose Facinet
+
+| Feature | Without Facinet | With Facinet |
+| --- | --- | --- |
+| 402 Response | Manual implementation | ✅ Automatic |
+| Payment Verification | Custom API calls | ✅ Built-in middleware |
+| Settlement | Direct chain interaction | ✅ Gasless via API |
+
+## 📊 Example Output
+
+```text
+--- Sending Request to AI Endpoint ---
+POST /api/summarize
+
+--- 402 Payment Required ---
+Payment prompt received from Facinet SDK.
+
+--- Executing Task ---
+[AI] Payment verified. Processing text...
+Result: "NeuralPay Gateway seamlessly integrates crypto micro-payments..."
+
+--- Transaction Hashes ---
+Access Logged On-Chain: 0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209
+```
 
 ## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    User([User / Developer])
-    Frontend[Web Interface Dashboard]
-    Paywall{x402 Paywall Middleware}
-    Backend[Node.js / Express Server]
-    Blockchain[(Avalanche Fuji Testnet)]
-    Groq[[Groq AI - Llama 3]]
-    HF[[Hugging Face - SDXL]]
-    Contracts[Payment History Smart Contract]
-
-    User -->|Interaction| Frontend
-    Frontend -->|API Request| Paywall
-    Paywall -->|Verified Payment| Backend
-    Backend -->|Text/EDA/Chat| Groq
-    Backend -->|Image Gen| HF
-    Backend -->|Record Log| Contracts
-    Contracts --- Blockchain
+    User([User / Client]) <-->|1. Request / 5. Result| Gateway[NeuralPay Gateway Express Server]
+    
+    subgraph "Execution Flow"
+        Gateway -->|2. Verify Payment| x402[x402 Middleware / Facinet]
+        x402 -.->|Gasless USDC| OnChainPay((Facilitator Network))
+        Gateway -->|3. AI Task| OpenAI[OpenAI API GPT-4o-mini]
+        Gateway -->|4. Log Access| Contract[AccessLog Smart Contract]
+    end
+    
+    subgraph "Blockchain (Avalanche Fuji)"
+        Contract
+    end
 ```
 
-## 🚀 Key Features
+## 🚀 Setup & API Usage
 
-### 1. 📝 AI Text Generation & Summary
-- **Summarize**: Condense long documents into concise summaries ($0.001)
-- **Generate**: High-speed text generation using Groq's Llama-3-70B model ($0.002)
+### 1. Clone Repo
+```bash
+git clone https://github.com/sohansarkar07/MMM
+cd neuralpay-gateway
+```
 
-### 2. 🎨 AI Image Generation
-- **SDXL-Lightning**: Generate high-quality 1024x1024 images from text prompts using Hugging Face's serverless inference ($0.003)
+### 2. Install Dependencies
+```bash
+npm install
+cd contracts && npm install
+```
 
-### 3. 📊 EDA Analysis (Exploratory Data Analysis)
-- **Interactive Charts**: Upload CSV files for automated statistical analysis.
-- **Visualizations**: Histograms, Doughnut charts, and Correlation Heatmaps using Chart.js ($0.002)
+### 3. Configure Environment
+Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY`, `WALLET_ADDRESS`, and `PRIVATE_KEY`.
 
-### 4. 💬 Dataset Chat
-- **Talk to your Data**: Ask natural language questions about your CSV datasets.
-- **Context-Aware**: AI analyzes data stats and sample rows to provide accurate insights ($0.002)
+### 4. Deploy Smart Contract
+```bash
+cd contracts
+npx hardhat run scripts/deploy.js --network fuji
+```
+- Copy the deployed address into your `.env` file as `CONTRACT_ADDRESS`.
 
-### 5. 🔍 Sentiment Analysis
-- **Advanced Insights**: Deep text analysis for sentiment and keyword extraction ($0.001)
+### 5. Start Server
+```bash
+node server.js
+```
 
-## 🛠️ Tech Stack
-- **Backend**: Node.js, Express
-- **AI Models**: Groq (Llama-3-70B), Hugging Face (Stable Diffusion XL)
-- **Frontend**: Vanilla HTML5/CSS3 (Modern Dark Theme), Chart.js
-- **Blockchain**: Solidity (Hardhat), Ethers.js
-- **Payments**: Facinet SDK (x402 Protocol)
-- **Network**: Avalanche Fuji Testnet
+### 6. Run Demo
+```bash
+node demo.js
+```
 
-## ⚙️ Setup & Installation
+## 🔌 API Endpoints
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/sohansarkar07/MMM
-   cd neuralpay-gateway
-   ```
+- **Summarize Text ($0.001)**: `POST /api/summarize`
+- **Generate Content ($0.002)**: `POST /api/generate`
+- **Analyze Text ($0.001)**: `POST /api/analyze`
+- **History (Free)**: `GET /api/history`
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+## 📚 References
 
-3. **Configure Environment Variables**
-   Create a `.env` file in the root directory:
-   ```env
-   GROQ_API_KEY=your_groq_key
-   HF_TOKEN=your_huggingface_token
-   WALLET_ADDRESS=your_avax_wallet
-   PRIVATE_KEY=your_private_key
-   CONTRACT_ADDRESS=your_deployed_contract
-   DEMO_MODE=true
-   ```
+- [x402 Protocol](https://x402.org/) — HTTP 402 payment standard
+- [Facinet SDK](https://github.com/facinet) — Payment middleware
+- [Avalanche Fuji](https://docs.avax.network/) — Testnet docs
+- [OpenAI API](https://openai.com/api/) — LLM for task processing
 
-4. **Smart Contract Deployment**
-   ```bash
-   cd contracts
-   npx hardhat run scripts/deploy.js --network fuji
-   ```
+## 📄 License
 
-5. **Run the Application**
-   ```bash
-   node server.js
-   ```
-   Access at `http://localhost:3000`
-
-## 🔗 Blockchain Logging
-Every successful AI request is logged on-chain. This ensures a transparent, immutable record of service usage and payments.
-- **Contract**: [View on Snowtrace](https://testnet.snowtrace.io/address/[CONTRACT_ADDRESS])
+MIT
 
 ---
-*Built for the VIBATHON Hackathon.*
+<div align="center">
+  <b>Built with ❤️ on Avalanche</b>
+</div>
