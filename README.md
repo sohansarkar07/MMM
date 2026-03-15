@@ -18,8 +18,8 @@
   <p>
     <a href="#-proof-of-payment">Live Transaction</a> •
     <a href="#%EF%B8%8F-architecture">Architecture</a> •
-    <a href="#-setup--api-usage">Quick Start</a> •
-    <a href="#-why-facinet-sdk">Why Facinet</a>
+    <a href="#%EF%B8%8F-task-pipeline">Pipeline</a> •
+    <a href="#-setup--api-usage">Quick Start</a>
   </p>
 </div>
 
@@ -55,6 +55,47 @@ Give it a task like *"Analyze this dataset for growth trends"* — it automatica
 
 ---
 
+## ⚙️ Task Pipeline
+
+This detailed execution pipeline mimics the complex orchestration required to handle dynamic AI endpoint requests, x402 payment confirmations, and on-chain logging seamlessly.
+
+```mermaid
+graph TD
+    subgraph "Main Terminal - Orchestrator"
+        U[User: Sends Data & Prompt] --> Dis[Discover Required Endpoint]
+        Dis --> Sel[Select AI Task: Summarize / Generate / EDA]
+        Sel --> Pay[Pay via x402 Facinet Middleware]
+    end
+
+    Pay -->|402 Configured| Net{Facilitator Network}
+    Net -->|USDC Transferred| Verified[Payment Confirmed]
+    Net -.->|Insufficient Funds| Denied[402 Error]
+
+    subgraph "Worker Agents - AI Infrastructure"
+        Verified --> W1
+        Verified --> W2
+        Verified --> W3
+        Verified --> W4
+        
+        W1[fa:fa-robot Groq Llama 3.3<br>Summary Agent]
+        W2[fa:fa-robot Groq Llama 3.3<br>Chat/Gen Agent]
+        W3[fa:fa-image HuggingFace SDXL<br>Vision Agent]
+        W4[fa:fa-chart-bar Local Compute + Groq<br>EDA Analyst]
+    end
+    
+    W1 -.-> Res[Compile Final JSON Result]
+    W2 -.-> Res
+    W3 -.-> Res
+    W4 -.-> Res
+
+    subgraph "On-Chain Resolution"
+        Res --> Log[Smart Contract: Record Payment & Access]
+        Log --> Final[Display Output + Tx Hash]
+    end
+```
+
+---
+
 ## 🏗️ Architecture
 
 ### High-Level Flow
@@ -86,23 +127,23 @@ sequenceDiagram
     participant F as Facinet
     participant A as Avalanche Fuji
 
-    C->>G: POST /api/summarize
+    C->>G: POST /task (e.g. /api/summarize)
     G-->>C: 402 Payment Required
     
     Note over C: Sign EIP-3009 authorization
     
-    C->>G: POST /api/summarize + X-PAYMENT header
-    G->>F: Verify payment
-    F->>A: Settle USDC transfer
+    C->>G: POST /task + X-PAYMENT header
+    G->>F: Verify payment structure
+    F->>A: Settle USDC transfer (Gasless)
     A-->>F: tx hash
     F-->>G: Payment confirmed
     
     Note over G: Execute AI Task (Groq/HF)
     
-    G->>A: Record recordPayment()
+    G->>A: Record on-chain access (recordPayment)
     A-->>G: contract tx hash
     
-    G-->>C: 200 OK + Result + Tx Hashes
+    G-->>C: 200 OK + Payload + Tx Hashes
 ```
 
 ---
@@ -134,7 +175,7 @@ neuralpay-gateway/
 | Contract | Address |
 | --- | --- |
 | **AccessLog** | `[CONTRACT_ADDRESS]` |
-| **Identity Registry** | `0x8004A818BFB912233c491871b3d84c89A494BD9E` |
+| **Reputation System** | `0x8004B663056A597Dffe9eCcc1965A193B7388713` |
 
 ---
 
@@ -148,8 +189,8 @@ neuralpay-gateway/
 | **Payments** | x402 Protocol (Facinet SDK) |
 | **LLM** | Groq (Llama 3.3-70b-versatile) |
 | **Vision** | Hugging Face (SDXL Base 1.0) |
-| **Chain Reads** | ethers.js / Snowscan |
-| **Discovery** | ERC-8004 (Identity & Reputation) |
+| **Chain Reads** | ethers.js / viem |
+| **Discovery** | ERC-8004 Standard |
 
 ---
 
@@ -227,6 +268,16 @@ cd contracts
 npx hardhat run scripts/deploy.js --network fuji
 ```
 - Copy the deployed address into your `.env` file as `CONTRACT_ADDRESS`.
+
+### 5. Start Server
+```bash
+node server.js
+```
+
+### 6. Run Demo
+```bash
+node demo.js
+```
 
 ---
 
