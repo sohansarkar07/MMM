@@ -51,7 +51,7 @@ Give it a task like *"Analyze this dataset for growth trends"* — it automatica
 | **Status** | ✅ Success |
 | **Network** | Avalanche Fuji (Testnet) |
 
-🔗 [View on Snowscan](https://testnet.snowtrace.io/address/0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209)
+🔗 [View on Snowscan](https://testnet.snowtrace.io/tx/0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209)
 
 ---
 
