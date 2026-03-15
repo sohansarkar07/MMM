@@ -1,10 +1,10 @@
 <div align="center">
   <h1>NeuralPay Gateway</h1>
-  <p><b>Pay-Per-Use AI Gateway on Avalanche</b></p>
+  <p><b>Agent-to-Agent Payment Gateway on Avalanche</b></p>
   
-  <img src="https://img.shields.io/badge/JAVASCRIPT-f7df1e?style=for-the-badge&logo=javascript&logoColor=black" alt="JavaScript" />
-  <img src="https://img.shields.io/badge/NODE.JS-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/badge/TYPESCRIPT-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/AVALANCHE-E84142?style=for-the-badge&logo=avalanche&logoColor=white" alt="Avalanche" />
+  <img src="https://img.shields.io/badge/NODE.JS-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
   <img src="https://img.shields.io/badge/LICENSE-MIT-blue?style=for-the-badge" alt="License" />
 
   <br />
@@ -13,10 +13,10 @@
   <h3>🎥 Demo Video</h3>
   <a href="#"><img src="https://img.shields.io/badge/▶_WATCH_DEMO-FF0000?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch Demo" /></a>
   <br />
-  <p><i>Monetize AI endpoints instantly with USDC micro-payments on Avalanche via x402 Protocol.</i></p>
+  <p><i>NeuralPay Gateway allows AI agents to hire, monetize, and pay other services in USDC via x402 protocol on Avalanche.</i></p>
 
   <p>
-    <a href="#-what-is-this">What is this?</a> •
+    <a href="#-proof-of-payment">Live Transaction</a> •
     <a href="#%EF%B8%8F-architecture">Architecture</a> •
     <a href="#-setup--api-usage">Quick Start</a> •
     <a href="#-why-facinet-sdk">Why Facinet</a>
@@ -27,15 +27,15 @@
 
 ## 📖 What is this?
 
-**NeuralPay Gateway** allows developers to monetize AI services with micro-fees. Every request is gated by an **x402 paywall**, ensuring instant crypto settlement before the AI response is delivered. 
+**NeuralPay Gateway** is a pay-per-use AI infrastructure built for the autonomous economy. It allows developers to monetize AI endpoints instantly with micro-fees. Every request is gated by an **x402 paywall**, ensuring blockchain-verified settlement before any computation begins.
 
-Give it a request to an AI endpoint without a valid payment header, and it automatically:
+Give it a task like *"Analyze this dataset for growth trends"* — it automatically:
 
-1. Returns an HTTP **402 Payment Required** status.
-2. Prompts user to pay a specific set price (e.g., $0.001 USDC) via the Facinet facilitator network.
-3. Allows users to sign payments gaslessly via the x402 protocol.
-4. Once verified, executes the **OpenAI GPT-4o-mini** task.
-5. Recurs permanently on-chain via an **AccessLog** smart contract for transparent usage auditing.
+1. **Gates the request** via an HTTP 402 Paywall.
+2. **Verifies ownership** of the signed USDC payment via Facinet.
+3. **Executes specialized tasks** via Groq (Llama 3.3) or Hugging Face (SDXL).
+4. **Logs the access** on-chain via the **AccessLog** smart contract.
+5. **Returns high-speed results** once the cross-chain settlement is confirmed.
 
 ---
 
@@ -51,7 +51,7 @@ Give it a request to an AI endpoint without a valid payment header, and it autom
 | **Status** | ✅ Success |
 | **Network** | Avalanche Fuji (Testnet) |
 
-🔗 [View on Snowscan](https://testnet.snowtrace.io/tx/0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209)
+🔗 [View on Snowscan](https://testnet.snowtrace.io/address/0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209)
 
 ---
 
@@ -66,7 +66,9 @@ graph TD
     subgraph "Execution Flow"
         Gateway -->|2. Verify Payment| x402[x402 Middleware / Facinet]
         x402 -.->|Gasless USDC| OnChainPay((Facilitator Network))
-        Gateway -->|3. AI Task| OpenAI[OpenAI API GPT-4o-mini]
+        Gateway -->|3. AI Task| AI_Engines{AI Engines}
+        AI_Engines -->|LLM| Groq[Groq: Llama 3.3]
+        AI_Engines -->|Vision| HF[HuggingFace: SDXL]
         Gateway -->|4. Log Access| Contract[AccessLog Smart Contract]
     end
     
@@ -95,9 +97,12 @@ sequenceDiagram
     A-->>F: tx hash
     F-->>G: Payment confirmed
     
-    Note over G: Execute AI Task & Log Access
+    Note over G: Execute AI Task (Groq/HF)
     
-    G-->>C: 200 OK + Result + Tx Hash
+    G->>A: Record recordPayment()
+    A-->>G: contract tx hash
+    
+    G-->>C: 200 OK + Result + Tx Hashes
 ```
 
 ---
@@ -105,17 +110,19 @@ sequenceDiagram
 ## 📁 Project Structure
 
 ```text
-skillwork/
-├── server.js              # Express + Facinet paywall & OpenAI routes
-├── demo.js                # API interaction demo script
+neuralpay-gateway/
+├── server.js              # Express + Facinet paywall & Provider routes
+├── demo.js                # CLI interaction demo script
 ├── contracts/             # Smart Contracts workspace
 │   ├── contracts/
 │   │   └── AccessLog.sol  # On-chain access logging contract
 │   ├── scripts/
 │   │   └── deploy.js      # Hardhat deployment script
 │   └── hardhat.config.js  # Fuji testnet configuration
-├── public/                # Frontend dashboard files
-└── .env                   # Environment variables
+├── public/                # Glassmorphic Dashboard
+│   ├── index.html         # Main UI
+│   └── eda.html           # Advanced Data Analytics UI
+└── .env                   # API Keys & Contract addresses
 ```
 
 ---
@@ -126,7 +133,8 @@ skillwork/
 
 | Contract | Address |
 | --- | --- |
-| AccessLog | `[CONTRACT_ADDRESS]` |
+| **AccessLog** | `[CONTRACT_ADDRESS]` |
+| **Identity Registry** | `0x8004A818BFB912233c491871b3d84c89A494BD9E` |
 
 ---
 
@@ -134,13 +142,14 @@ skillwork/
 
 | Component | Technology |
 | --- | --- |
-| **Backend** | Node.js, Express |
-| **AI** | OpenAI (GPT-4o-mini) |
-| **Payments** | x402 Protocol |
-| **Settlement** | facinet-sdk |
+| **Runtime** | Node.js 18+ |
+| **Language** | TypeScript / JavaScript |
 | **Blockchain** | Avalanche Fuji |
-| **Smart Contracts** | Solidity, Ethers.js, Hardhat |
-| **Frontend** | Glassmorphic Dashboard (Vanilla JS/CSS) |
+| **Payments** | x402 Protocol (Facinet SDK) |
+| **LLM** | Groq (Llama 3.3-70b-versatile) |
+| **Vision** | Hugging Face (SDXL Base 1.0) |
+| **Chain Reads** | ethers.js / Snowscan |
+| **Discovery** | ERC-8004 (Identity & Reputation) |
 
 ---
 
@@ -162,23 +171,15 @@ Facinet SDK abstracts all of this into a single middleware:
 ```javascript
 import { paywall } from 'facinet-sdk'
 
-app.post('/api/summarize', paywall({
-    amount: '0.001',
+app.post('/api/eda', paywall({
+    amount: '0.002',
     recipient: process.env.WALLET_ADDRESS
 }), async (req, res) => {
-    // Payment already verified! Just do your thing
-    const result = await processTask(req.body.text)
-    res.json({ result })
+    // Payment already verified!
+    const insights = await analyzeData(req.body.csv)
+    res.json({ insights })
 })
 ```
-
-### Why We Chose Facinet
-
-| Feature | Without Facinet | With Facinet |
-| --- | --- | --- |
-| 402 Response | Manual implementation | ✅ Automatic |
-| Payment Verification | Custom API calls | ✅ Built-in middleware |
-| Settlement | Direct chain interaction | ✅ Gasless via API |
 
 ---
 
@@ -192,11 +193,13 @@ POST /api/summarize
 Payment prompt received from Facinet SDK.
 
 --- Executing Task ---
-[AI] Payment verified. Processing text...
+[AI] Payment verified ($0.001 USDC).
+[Groq] Summarizing text via Llama 3.3...
 Result: "NeuralPay Gateway seamlessly integrates crypto micro-payments..."
 
---- Transaction Hashes ---
-Access Logged On-Chain: 0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209
+--- On-Chain Logging ---
+Contract Record: 0x731c756ef3cd000973d9b028dac668a50e3fa90ebf6afe36e6ece4fa16ce5209
+Status: PERSISTED ON AVALANCHE FUJI
 ```
 
 ---
@@ -216,7 +219,7 @@ cd contracts && npm install
 ```
 
 ### 3. Configure Environment
-Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY`, `WALLET_ADDRESS`, and `PRIVATE_KEY`.
+Copy `.env.example` to `.env` and fill in `GROQ_API_KEY`, `HF_TOKEN`, `WALLET_ADDRESS`, and `PRIVATE_KEY`.
 
 ### 4. Deploy Smart Contract
 ```bash
@@ -225,24 +228,18 @@ npx hardhat run scripts/deploy.js --network fuji
 ```
 - Copy the deployed address into your `.env` file as `CONTRACT_ADDRESS`.
 
-### 5. Start Server
-```bash
-node server.js
-```
-
-### 6. Run Demo
-```bash
-node demo.js
-```
-
 ---
 
 ## 🔌 API Endpoints
 
-- **Summarize Text ($0.001)**: `POST /api/summarize`
-- **Generate Content ($0.002)**: `POST /api/generate`
-- **Analyze Text ($0.001)**: `POST /api/analyze`
-- **History (Free)**: `GET /api/history`
+| Endpoint | Method | Cost | Description |
+| --- | --- | --- | --- |
+| `/api/summarize` | `POST` | $0.001 | Concisely summarize long text |
+| `/api/generate` | `POST` | $0.002 | Creative text generation (Groq) |
+| `/api/generate-image` | `POST` | $0.003 | Image generation (SDXL) |
+| `/api/eda` | `POST` | $0.002 | Automated Exploratory Data Analysis |
+| `/api/dataset-chat` | `POST` | $0.002 | Chat with CSV data via Llama 3.3 |
+| `/api/analyze` | `POST` | $0.001 | Sentiment & Keyword extraction |
 
 ---
 
@@ -250,9 +247,9 @@ node demo.js
 
 - [x402 Protocol](https://x402.org/) — HTTP 402 payment standard
 - [ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) — Agent identity & reputation
-- [Facinet SDK](https://github.com/facinet) — Payment middleware
-- [Avalanche Fuji](https://docs.avax.network/) — Testnet docs
-- [OpenAI API](https://openai.com/api/) — LLM for task processing
+- [Groq API](https://groq.com/) — High-speed LLM inference
+- [Hugging Face](https://huggingface.co/) — Open-source model hub
+- [Avalanche Fuji](https://docs.avax.network/) — Testnet documentation
 
 ---
 
