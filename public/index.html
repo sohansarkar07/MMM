@@ -206,6 +206,88 @@
             background: rgba(0, 255, 128, 0.1);
         }
 
+        /* Wallet Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .wallet-modal {
+            background: #151520;
+            border: 1px solid var(--border);
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 0 50px var(--accent-glow);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #fff;
+        }
+
+        .wallet-option {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            border-radius: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .wallet-option:hover {
+            background: rgba(124, 77, 255, 0.1);
+            border-color: var(--accent);
+            transform: translateX(5px);
+        }
+
+        .wallet-icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .wallet-info h3 {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .wallet-info p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
         .result-box {
             margin-top: 1.5rem;
             background: rgba(0, 0, 0, 0.3);
@@ -319,6 +401,48 @@
         </div>
     </header>
 
+    <!-- Wallet Selection Modal -->
+    <div id="wallet-modal-overlay" class="modal-overlay">
+        <div class="wallet-modal">
+            <div class="modal-header">
+                <h2>Select a Wallet</h2>
+                <span class="modal-close" onclick="closeWalletModal()">&times;</span>
+            </div>
+            
+            <div class="wallet-option" onclick="connectSpecificWallet('metamask')">
+                <div class="wallet-icon">🦊</div>
+                <div class="wallet-info">
+                    <h3>MetaMask</h3>
+                    <p>Browser Extension</p>
+                </div>
+            </div>
+
+            <div class="wallet-option" onclick="connectSpecificWallet('coinbase')">
+                <div class="wallet-icon">🔵</div>
+                <div class="wallet-info">
+                    <h3>Coinbase Wallet</h3>
+                    <p>Self-Custody Wallet</p>
+                </div>
+            </div>
+
+            <div class="wallet-option" onclick="connectSpecificWallet('trust')">
+                <div class="wallet-icon">🛡️</div>
+                <div class="wallet-info">
+                    <h3>Trust Wallet</h3>
+                    <p>Mobile & Extension</p>
+                </div>
+            </div>
+
+            <div class="wallet-option" onclick="connectSpecificWallet('walletconnect')">
+                <div class="wallet-icon">🔗</div>
+                <div class="wallet-info">
+                    <h3>WalletConnect</h3>
+                    <p>Any Mobile Wallet</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <main>
         <div class="playground">
             <!-- Summarize Card -->
@@ -429,35 +553,65 @@
     <script>
         let userAccount = null;
 
-        async function connectWallet() {
+        function openWalletModal() {
+            document.getElementById('wallet-modal-overlay').style.display = 'flex';
+        }
+
+        function closeWalletModal() {
+            document.getElementById('wallet-modal-overlay').style.display = 'none';
+        }
+
+        async function connectSpecificWallet(type) {
+            console.log('Connecting to:', type);
+            
+            if (type === 'walletconnect') {
+                alert('WalletConnect integration requires a Project ID. Defaulting to Browser injection...');
+            }
+
             if (typeof window.ethereum !== 'undefined') {
                 try {
-                    const btn = document.getElementById('connect-wallet');
-                    const text = document.getElementById('wallet-text');
-                    
                     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     userAccount = accounts[0];
-                    
-                    text.innerText = userAccount.slice(0, 6) + '...' + userAccount.slice(-4);
-                    btn.classList.add('connected');
-                    console.log('Connected:', userAccount);
+                    updateWalletUI(userAccount);
+                    closeWalletModal();
                 } catch (error) {
                     console.error('User rejected connection');
                 }
             } else {
-                alert('Please install MetaMask!');
+                alert('No compatible wallet extension found! Please install MetaMask or Coinbase Wallet.');
             }
         }
 
-        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+        function updateWalletUI(account) {
+            const btn = document.getElementById('connect-wallet');
+            const text = document.getElementById('wallet-text');
+            text.innerText = account.slice(0, 6) + '...' + account.slice(-4);
+            btn.classList.add('connected');
+        }
+
+        document.getElementById('connect-wallet').addEventListener('click', () => {
+            if (userAccount) {
+                // Already connected, maybe show disconnect or copy?
+                alert(`Connected: ${userAccount}`);
+            } else {
+                openWalletModal();
+            }
+        });
+
+        // Close modal on click outside
+        window.onclick = function(event) {
+            const overlay = document.getElementById('wallet-modal-overlay');
+            if (event.target == overlay) {
+                closeWalletModal();
+            }
+        }
 
         // Check if already connected
         if (typeof window.ethereum !== 'undefined') {
             window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
                 if (accounts.length > 0) {
                     userAccount = accounts[0];
-                    document.getElementById('wallet-text').innerText = userAccount.slice(0, 6) + '...' + userAccount.slice(-4);
-                    document.getElementById('connect-wallet').classList.add('connected');
+                    updateWalletUI(userAccount);
                 }
             });
         }
