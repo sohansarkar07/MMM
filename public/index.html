@@ -181,6 +181,31 @@
             cursor: not-allowed;
         }
 
+        .connect-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .connect-btn:hover {
+            background: rgba(124, 77, 255, 0.2);
+            border-color: var(--accent);
+        }
+
+        .connect-btn.connected {
+            border-color: #00ff80;
+            background: rgba(0, 255, 128, 0.1);
+        }
+
         .result-box {
             margin-top: 1.5rem;
             background: rgba(0, 0, 0, 0.3);
@@ -287,6 +312,10 @@
                 <div class="status-dot"></div>
                 <span id="network-name">Avalanche Fuji</span>
             </div>
+            <button id="connect-wallet" class="connect-btn">
+                <span>🦊</span>
+                <span id="wallet-text">Connect Wallet</span>
+            </button>
         </div>
     </header>
 
@@ -398,6 +427,40 @@
     </main>
 
     <script>
+        let userAccount = null;
+
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const btn = document.getElementById('connect-wallet');
+                    const text = document.getElementById('wallet-text');
+                    
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    userAccount = accounts[0];
+                    
+                    text.innerText = userAccount.slice(0, 6) + '...' + userAccount.slice(-4);
+                    btn.classList.add('connected');
+                    console.log('Connected:', userAccount);
+                } catch (error) {
+                    console.error('User rejected connection');
+                }
+            } else {
+                alert('Please install MetaMask!');
+            }
+        }
+
+        document.getElementById('connect-wallet').addEventListener('click', connectWallet);
+
+        // Check if already connected
+        if (typeof window.ethereum !== 'undefined') {
+            window.ethereum.request({ method: 'eth_accounts' }).then(accounts => {
+                if (accounts.length > 0) {
+                    userAccount = accounts[0];
+                    document.getElementById('wallet-text').innerText = userAccount.slice(0, 6) + '...' + userAccount.slice(-4);
+                    document.getElementById('connect-wallet').classList.add('connected');
+                }
+            });
+        }
         // Update health and history every 5 seconds
         async function updateStats() {
             try {
