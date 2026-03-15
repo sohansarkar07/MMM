@@ -193,16 +193,13 @@ app.post('/api/generate-image', x402Middleware(0.003), async (req, res) => {
             dataUrl = `data:image/png;base64,${base64}`;
 
         } catch (hfError) {
-            console.log(`[HF Fallback] Hugging Face failed (${hfError.message}). Falling back to Placeholder API...`);
+            console.log(`[HF Fallback] Hugging Face failed (${hfError.message}). Generating offline SVG placeholder...`);
             
-            // Attempt #2: Fallback to reliable placeholder API for seamless hackathon demos
-            const fallbackResponse = await fetch(`https://picsum.photos/seed/${encodeURIComponent(prompt)}/512/512`);
-            if (!fallbackResponse.ok) {
-                throw new Error(`Fallback Image API returned status ${fallbackResponse.status}`);
-            }
-            const fallbackBuffer = await fallbackResponse.arrayBuffer();
-            const fallbackBase64 = Buffer.from(fallbackBuffer).toString('base64');
-            dataUrl = `data:image/jpeg;base64,${fallbackBase64}`;
+            // Attempt #2: Fallback to an offline generated SVG so the hackathon demo NEVER fails!
+            const safePrompt = prompt.replace(/</g, "&lt;").substring(0, 40);
+            const svgPlaceholder = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512"><rect width="512" height="512" fill="#8B5CF6"/><text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="24" fill="white">AI Image Simulated</text><text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="#EDE9FE">Prompt: ${safePrompt}</text></svg>`;
+            
+            dataUrl = `data:image/svg+xml;base64,${Buffer.from(svgPlaceholder).toString('base64')}`;
         }
 
         const onChainTx = await recordOnChain(req.x402.from, "/api/generate-image", 0.003);
